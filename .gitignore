@@ -1,0 +1,18 @@
+# Dependencies
+/node_modules
+/client/node_modules
+
+
+# Testing
+/coverage
+/client/coverage
+
+# Production
+/build
+/client/build
+/dist
+/client/dist
+
+
+
+
