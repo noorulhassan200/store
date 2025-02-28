@@ -67,19 +67,34 @@ class User {
   }
 
   async postEditUser(req, res) {
-    let { uId, name, phoneNumber } = req.body;
-    if (!uId || !name || !phoneNumber) {
-      return res.json({ message: "All filled must be required" });
-    } else {
-      let currentUser = userModel.findByIdAndUpdate(uId, {
-        name: name,
-        phoneNumber: phoneNumber,
-        updatedAt: Date.now(),
-      });
-      currentUser.exec((err, result) => {
-        if (err) console.log(err);
-        return res.json({ success: "User updated successfully" });
-      });
+    try {
+      const { uId, name, phoneNumber } = req.body;
+      
+      // Validation
+      if (!uId || !name || !phoneNumber) {
+        return res.json({ error: "All fields are required" });
+      }
+
+      // Find and update user
+      const editUser = await userModel.findByIdAndUpdate(
+        uId,
+        {
+          name,
+          phoneNumber,
+          updatedAt: Date.now(),
+        },
+        { new: true }
+      );
+
+      if (!editUser) {
+        return res.json({ error: "User not found" });
+      }
+
+      return res.json({ success: "User updated successfully" });
+
+    } catch (err) {
+      console.log(err);
+      return res.json({ error: "An error occurred while updating user" });
     }
   }
 
@@ -87,15 +102,19 @@ class User {
     let { oId, status } = req.body;
     if (!oId || !status) {
       return res.json({ message: "All filled must be required" });
-    } else {
-      let currentUser = userModel.findByIdAndUpdate(oId, {
+    }
+    try {
+      const result = await userModel.findByIdAndUpdate(oId, {
         status: status,
         updatedAt: Date.now(),
       });
-      currentUser.exec((err, result) => {
-        if (err) console.log(err);
-        return res.json({ success: "User updated successfully" });
-      });
+      if (!result) {
+        return res.json({ error: "User not found" });
+      }
+      return res.json({ success: "User updated successfully" });
+    } catch (err) {
+      console.log(err);
+      return res.json({ error: "An error occurred while updating user" });
     }
   }
 
@@ -103,29 +122,31 @@ class User {
     let { uId, oldPassword, newPassword } = req.body;
     if (!uId || !oldPassword || !newPassword) {
       return res.json({ message: "All filled must be required" });
-    } else {
+    }
+    try {
       const data = await userModel.findOne({ _id: uId });
       if (!data) {
         return res.json({
           error: "Invalid user",
         });
-      } else {
-        const oldPassCheck = await bcrypt.compare(oldPassword, data.password);
-        if (oldPassCheck) {
-          newPassword = bcrypt.hashSync(newPassword, 10);
-          let passChange = userModel.findByIdAndUpdate(uId, {
-            password: newPassword,
-          });
-          passChange.exec((err, result) => {
-            if (err) console.log(err);
-            return res.json({ success: "Password updated successfully" });
-          });
-        } else {
-          return res.json({
-            error: "Your old password is wrong!!",
-          });
-        }
       }
+      
+      const oldPassCheck = await bcrypt.compare(oldPassword, data.password);
+      if (!oldPassCheck) {
+        return res.json({
+          error: "Your old password is wrong!!",
+        });
+      }
+
+      newPassword = bcrypt.hashSync(newPassword, 10);
+      await userModel.findByIdAndUpdate(uId, {
+        password: newPassword,
+      });
+      
+      return res.json({ success: "Password updated successfully" });
+    } catch (err) {
+      console.log(err);
+      return res.json({ error: "An error occurred while updating password" });
     }
   }
 }

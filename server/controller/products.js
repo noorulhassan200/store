@@ -96,69 +96,39 @@ class Product {
   }
 
   async postEditProduct(req, res) {
-    let {
-      pId,
-      pName,
-      pDescription,
-      pPrice,
-      pQuantity,
-      pCategory,
-      pOffer,
-      pStatus,
-      pImages,
-    } = req.body;
-    let editImages = req.files;
+    try {
+      const { pId, pName, pDescription, pPrice, pQuantity, pCategory, pOffer, pStatus } = req.body;
+      
+      // Validation
+      if (!pId || !pName || !pDescription || !pPrice || !pQuantity || !pCategory || !pOffer || !pStatus) {
+        return res.json({ error: "All fields are required" });
+      }
 
-    // Validate other fileds
-    if (
-      !pId |
-      !pName |
-      !pDescription |
-      !pPrice |
-      !pQuantity |
-      !pCategory |
-      !pOffer |
-      !pStatus
-    ) {
-      return res.json({ error: "All filled must be required" });
-    }
-    // Validate Name and description
-    else if (pName.length > 255 || pDescription.length > 3000) {
-      return res.json({
-        error: "Name 255 & Description must not be 3000 charecter long",
-      });
-    }
-    // Validate Update Images
-    else if (editImages && editImages.length == 1) {
-      Product.deleteImages(editImages, "file");
-      return res.json({ error: "Must need to provide 2 images" });
-    } else {
-      let editData = {
-        pName,
-        pDescription,
-        pPrice,
-        pQuantity,
-        pCategory,
-        pOffer,
-        pStatus,
-      };
-      if (editImages.length == 2) {
-        let allEditImages = [];
-        for (const img of editImages) {
-          allEditImages.push(img.filename);
-        }
-        editData = { ...editData, pImages: allEditImages };
-        Product.deleteImages(pImages.split(","), "string");
+      // Find and update product
+      const editProduct = await productModel.findByIdAndUpdate(
+        pId,
+        {
+          pName,
+          pDescription,
+          pPrice,
+          pQuantity,
+          pCategory,
+          pOffer,
+          pStatus,
+          updatedAt: Date.now(),
+        },
+        { new: true }
+      );
+
+      if (!editProduct) {
+        return res.json({ error: "Product not found" });
       }
-      try {
-        let editProduct = productModel.findByIdAndUpdate(pId, editData);
-        editProduct.exec((err) => {
-          if (err) console.log(err);
-          return res.json({ success: "Product edit successfully" });
-        });
-      } catch (err) {
-        console.log(err);
-      }
+
+      return res.json({ success: "Product edited successfully" });
+
+    } catch (err) {
+      console.log(err);
+      return res.json({ error: "An error occurred while editing product" });
     }
   }
 
