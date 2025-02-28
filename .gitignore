@@ -1,18 +1,15 @@
-# Dependencies
-/node_modules
-/client/node_modules
+# Server 
+server/node_modules
+server/requests.http
 
-
-# Testing
-/coverage
-/client/coverage
-
-# Production
-/build
-/client/build
-/dist
-/client/dist
-
-
-
+# Client
+client/node_modules
+client/.pnp
+.pnp.js
+client/coverage
+client/build
+client/.DS_Store
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
 
